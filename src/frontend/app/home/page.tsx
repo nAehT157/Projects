@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 
 import SearchForm from "../../components/booking/SearchForm";
+import PopularRoutes from "../../components/ui/PopularRoutes";
+import BusStations from "../../components/ui/BusStations";
 import type { SearchValues } from "../../types";
 
 export default function Home() {
@@ -45,16 +47,23 @@ export default function Home() {
         </div>
         <SearchForm onSubmit={submit} />
       </section>
+
+      {/* Popular Routes Carousel */}
+      <PopularRoutes />
+
+      {/* Bus Stations Carousel */}
+      <BusStations />
+
       <section className="benefits">
         <div>
           <span>01</span>
-          <h3>Tuyến xe phổ biến</h3>
-          <p>Khám phá những hành trình được nhiều hành khách lựa chọn.</p>
+          <h3>An toàn & Tiện lợi</h3>
+          <p>Đặt vé nhanh chóng, thanh toán an toàn với nhiều phương thức.</p>
         </div>
         <div>
           <span>02</span>
-          <h3>Bến xe</h3>
-          <p>Tra cứu các bến xe đang phục vụ trong hệ thống.</p>
+          <h3>Đa dạng lựa chọn</h3>
+          <p>Hàng nghìn chuyến xe mỗi ngày từ các nhà xe uy tín.</p>
         </div>
         <div>
           <span>03</span>
