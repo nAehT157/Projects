@@ -1,8 +1,44 @@
-# Database
+# Database và JPA mapping
 
-Thư mục lưu thiết kế cơ sở dữ liệu.
+Class diagram đã chốt có 20 entity. JPA mapping nằm trong `src/backend/src/main/java/com/datvexe/domain/Entities.java`; persistence unit đăng ký tường minh trong `src/backend/src/main/resources/META-INF/persistence.xml`. Các enum được định nghĩa trong `States.java` và lưu dưới dạng chuỗi (`EnumType.STRING`).
 
-## Noi dung
+## Danh sách entity
 
-- `schema/`: file tạo bảng, khóa chính, khóa ngoại, index.
-- `seed/`: dữ liệu mẫu phục vụ kiểm thử và demo.
+| Nhóm | Entity |
+| --- | --- |
+| Tuyến đường | `TinhThanh`, `BenXe`, `TuyenXe`, `DiemDung`, `ChuyenXe` |
+| Công ty vận tải | `NhaXe`, `NhanVien`, `PhanCongChuyenXe` |
+| Phương tiện | `LoaiXe`, `Xe`, `Ghe`, `GiuCho` |
+| Khách hàng | `NguoiDung`, `DanhGia` |
+| Đặt vé | `DonDatVe`, `VeXe` |
+| Thanh toán | `ThanhToan`, `PhuongThucThanhToan`, `ChinhSachHoanVe`, `KhuyenMai` |
+
+## Quan hệ chính
+
+- `TinhThanh` 1–n `BenXe`.
+- `BenXe` được tham chiếu riêng ở vai trò bến khởi hành và bến đến của `TuyenXe`; một tuyến có nhiều `DiemDung` theo `thuTu` và có nhiều `ChuyenXe`.
+- `NhaXe` 1–n `NhanVien`, `Xe` và `TuyenXe`; `NhanVien` có các bản ghi `PhanCongChuyenXe`, mỗi bản ghi thuộc một chuyến và một nhân viên, kèm `VaiTroChuyen`.
+- `LoaiXe` 1–n `Xe`; `Xe` 1–n `Ghe`. `ChuyenXe` có thể gán một `Xe` và có nhiều `GiuCho`, `VeXe`, `DanhGia` và `PhanCongChuyenXe`.
+- `GiuCho` gắn với một `ChuyenXe`, một `Ghe` và có thể gắn với `DonDatVe` sau khi xác nhận.
+- `NguoiDung` 1–n `DonDatVe` và `DanhGia`; `DonDatVe` chứa các `VeXe`, có thể áp dụng một `KhuyenMai` và một `ChinhSachHoanVe`, và có nhiều `ThanhToan`.
+- Mỗi `VeXe` thuộc một đơn, một chuyến và một ghế. Ràng buộc unique trên `(ma_ghe, ma_chuyen)` ngăn bán trùng ghế trong cùng chuyến.
+- `PhuongThucThanhToan` 1–n `ThanhToan`.
+
+`NguoiDung` có phạm vi nhà xe tùy chọn, liên kết nhân viên tùy chọn duy nhất; `AuthSession` thuộc một người dùng, chỉ lưu hash token và thời điểm hết hạn. Xem [T07](../api/account-auth.md) để nâng cấp và khởi tạo quản trị viên.
+
+Các quan hệ ngược dạng `List<>` được khai báo trong entity cha; khóa ngoại nằm ở entity con. `TuyenXe` giữ hai quan hệ `BenXe` riêng cho điểm đầu/cuối; `DiemDung` là điểm dừng trung gian độc lập, không tham chiếu bến xe theo class diagram.
+
+## Schema và migration
+
+- `schema/001_route_trip.sql` tạo schema 20 entity nghiệp vụ khi database mới; đồng thời bổ sung các bảng/cột thiếu cho database đã dùng schema route-trip cũ. Các câu lệnh lặp lại an toàn với `IF NOT EXISTS`.
+- `schema/002_vehicle_alignment.sql` bổ sung cấu trúc xe/phân công; `schema/003_account_auth.sql` thêm liên kết phạm vi của NguoiDung và bảng `phien_dang_nhap` (entity thứ 21).
+- Docker Compose chạy 001 → 002 → 003 → seed khi tạo volume mới. Volume cũ phải áp dụng từng migration; không tự chạy lại init scripts.
+- Nếu volume đã tồn tại, từ thư mục gốc repository áp dụng file một lần:
+
+```bash
+docker exec -i datvexe-postgres psql -U datvexe_user -d datvexe -v ON_ERROR_STOP=1 < docs/database/schema/001_route_trip.sql
+docker exec -i datvexe-postgres psql -U datvexe_user -d datvexe -v ON_ERROR_STOP=1 < docs/database/schema/002_vehicle_alignment.sql
+docker exec -i datvexe-postgres psql -U datvexe_user -d datvexe -v ON_ERROR_STOP=1 < docs/database/schema/003_account_auth.sql
+```
+
+Hibernate dùng `hibernate.hbm2ddl.auto=validate`: nó kiểm tra schema khớp mapping khi khởi động, không tự tạo hoặc sửa bảng. Các module khác có thể dùng entity và quan hệ JPA làm nền; controller/service nghiệp vụ của những module đó vẫn do thành viên phụ trách triển khai.
