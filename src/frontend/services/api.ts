@@ -13,7 +13,7 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
 export const api = {
   provinces: () => apiFetch<Province[]>("/api/tinh-thanh"),
   stations: () => apiFetch<Station[]>("/api/ben-xe"),
-  routes: () => apiFetch<Route[]>("/api/tuyen-xe"),
+  routes: () => apiFetch<Route[]>("/api/tuyen-xe/cong-khai"),
   searchTrips: (values: SearchValues) => apiFetch<TripSummary[]>(`/api/chuyen-xe?from=${encodeURIComponent(values.from)}&to=${encodeURIComponent(values.to)}&date=${values.date}`),
   trip: (id: string) => apiFetch<TripDetail>(`/api/chuyen-xe/${encodeURIComponent(id)}`),
   seats: (vehicleId: string) => apiFetch<import("../types").Seat[]>(`/api/xe/${encodeURIComponent(vehicleId)}/ghe`),
